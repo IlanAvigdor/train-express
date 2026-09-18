@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import WelcomeStep from './steps/WelcomeStep';
 import ClientInfoStep from './steps/ClientInfoStep';
 import EventDetailsStep from './steps/EventDetailsStep';
@@ -6,6 +6,9 @@ import PackageDetailsStep from './steps/PackageDetailsStep';
 import SignatureStep from './steps/SignatureStep';
 import TermsStep from './steps/TermsStep';
 import ContractPDFTemplate from './ContractPDFTemplate';
+import html2pdf from 'html2pdf.js';
+import { functions } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
 
 const STEPS = [
   WelcomeStep,
@@ -17,19 +20,34 @@ const STEPS = [
 ];
 
 const Wizard = () => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(() => {
+    const savedStep = sessionStorage.getItem('wizardStep');
+    return savedStep ? parseInt(savedStep, 10) : 0;
+  });
+  
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [debugMsg, setDebugMsg] = useState("");
   const pdfRef = useRef(null);
   
-  const [formData, setFormData] = useState({
-    clientName: '',
-    clientPhone: '',
-    eventDate: '',
-    guestsCount: '',
-    location: '',
-    signature: null,
+  const [formData, setFormData] = useState(() => {
+    const savedData = sessionStorage.getItem('wizardData');
+    return savedData ? JSON.parse(savedData) : {
+      clientName: '',
+      clientPhone: '',
+      eventDate: '',
+      guestsCount: '',
+      location: '',
+      signature: null,
+    };
   });
+
+  useEffect(() => {
+    sessionStorage.setItem('wizardStep', currentStep);
+  }, [currentStep]);
+
+  useEffect(() => {
+    sessionStorage.setItem('wizardData', JSON.stringify(formData));
+  }, [formData]);
 
   const nextStep = () => {
     if (currentStep < STEPS.length - 1) setCurrentStep(prev => prev + 1);
@@ -59,10 +77,7 @@ const Wizard = () => {
         throw new Error("PDF Template element is null");
       }
 
-      setDebugMsg("Step 3: Loading PDF libraries...");
-      // Dynamically import html2pdf.js
-      const html2pdfModule = await import('html2pdf.js');
-      const html2pdf = html2pdfModule.default || html2pdfModule;
+      setDebugMsg("Step 3: Preparing PDF...");
 
       setDebugMsg("Step 4: Generating PDF as Base64...");
       const opt = {
@@ -80,8 +95,6 @@ const Wizard = () => {
       }
 
       setDebugMsg("Step 5: Sending contract to server...");
-      const { functions } = await import('../firebase');
-      const { httpsCallable } = await import('firebase/functions');
       
       const sendContract = httpsCallable(functions, 'sendSignedContract');
       
@@ -102,6 +115,11 @@ const Wizard = () => {
       const phoneNumber = "972546231678";
       const encodedText = encodeURIComponent(text);
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
+      
+      // Clear session storage on success
+      sessionStorage.removeItem('wizardData');
+      sessionStorage.removeItem('wizardStep');
+      
       window.location.href = whatsappUrl;
 
     } catch (error) {
