@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /contracts/{allPaths=**} {
+      allow write: if true; // In production, we'd want to restrict this better, but for now we allow uploads
+      allow read: if true; // Functions need to read it (though admin sdk bypasses rules) or user can download it
+    }
+  }
+}

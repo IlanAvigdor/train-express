@@ -1,12 +1,10 @@
 import React, { useState, useRef } from 'react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import WelcomeStep from './steps/WelcomeStep';
 import ClientInfoStep from './steps/ClientInfoStep';
 import EventDetailsStep from './steps/EventDetailsStep';
 import PackageDetailsStep from './steps/PackageDetailsStep';
-import TermsStep from './steps/TermsStep';
 import SignatureStep from './steps/SignatureStep';
+import TermsStep from './steps/TermsStep';
 import ContractPDFTemplate from './ContractPDFTemplate';
 
 const STEPS = [
@@ -61,52 +59,51 @@ const Wizard = () => {
         throw new Error("PDF Template element is null");
       }
 
-      setDebugMsg("Step 3: Taking screenshot (html2canvas)...");
-      const canvas = await html2canvas(element, {
-        scale: 2, // High quality
-        useCORS: true,
-        logging: true
-      });
-      
-      setDebugMsg("Step 4: Creating PDF (jsPDF)...");
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width / 2, canvas.height / 2]
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-      
-      setDebugMsg("Step 5: Preparing file...");
-      const pdfBlob = pdf.output('blob');
-      const file = new File([pdfBlob], "Tamar_Contract.pdf", { type: 'application/pdf' });
+      setDebugMsg("Step 3: Loading PDF libraries...");
+      // Dynamically import html2pdf.js
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule;
 
-      const text = `*חוזה חדש נחתם!* 🎉\n\n*שם הלקוח:* ${finalData.clientName}\n*טלפון:* ${finalData.clientPhone}\n*תאריך האירוע:* ${finalData.eventDate}\n*כמות מוזמנים:* ${finalData.guestsCount}\n*מיקום:* ${finalData.location}\n\nמצורף החוזה החתום כקובץ PDF.`;
+      setDebugMsg("Step 4: Generating PDF as Base64...");
+      const opt = {
+        margin:       0,
+        filename:     'Tamar_Contract.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: true },
+        jsPDF:        { unit: 'px', format: 'a4', orientation: 'portrait' }
+      };
 
-      setDebugMsg("Step 6: Triggering Web Share...");
-      // Try Web Share API (mostly mobile)
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'חוזה התקשרות חתום',
-          text: text,
-          files: [file]
-        });
-        setDebugMsg("Done! Shared via navigator.share");
-      } else {
-        // Fallback for desktop or unsupported browsers
-        setDebugMsg("Step 6b: Fallback to download...");
-        try {
-          pdf.save("Tamar_Contract_Signed.pdf");
-        } catch (e) {
-          console.error("Could not save PDF locally", e);
-        }
-        
-        const phoneNumber = "972585800933";
-        const encodedText = encodeURIComponent(text + '\n(שים לב: הקובץ ירד למחשב, נא לצרף אותו ידנית)');
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
-        window.location.href = whatsappUrl;
+      const pdfBase64 = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+      
+      if (!pdfBase64) {
+        throw new Error("Failed to generate PDF Base64");
       }
+
+      setDebugMsg("Step 5: Sending contract to server...");
+      const { functions } = await import('../firebase');
+      const { httpsCallable } = await import('firebase/functions');
+      
+      const sendContract = httpsCallable(functions, 'sendSignedContract');
+      
+      await sendContract({
+        pdfBase64: pdfBase64,
+        clientName: finalData.clientName,
+        clientPhone: finalData.clientPhone,
+        eventDate: finalData.eventDate,
+        guestsCount: finalData.guestsCount,
+        location: finalData.location,
+        clientEmail: finalData.clientEmail || ''
+      });
+
+      setDebugMsg("Done! Contract sent successfully via Email.");
+
+      // Notify Tamar via WhatsApp
+      const text = `*חוזה חדש נחתם!* 🎉\n\n*שם הלקוח:* ${finalData.clientName}\n*טלפון:* ${finalData.clientPhone}\n*תאריך האירוע:* ${finalData.eventDate}\n*כמות מוזמנים:* ${finalData.guestsCount}\n*מיקום:* ${finalData.location}\n\nהחוזה נשלח למייל בהצלחה.`;
+      const phoneNumber = "972585800933";
+      const encodedText = encodeURIComponent(text);
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
+      window.location.href = whatsappUrl;
+
     } catch (error) {
       console.error("Error generating or sharing PDF:", error);
       alert("Error: " + error.message);

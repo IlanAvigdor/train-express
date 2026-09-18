@@ -12,12 +12,21 @@ const SignatureStep = ({ prevStep, submitForm, formData }) => {
   };
 
   const handleSubmit = () => {
-    if (sigPad.current.isEmpty()) {
-      setError('נא לחתום במשבצת למעלה לפני האישור');
-      return;
+    try {
+      if (!sigPad.current) {
+        alert("שגיאה: רכיב החתימה לא נטען");
+        return;
+      }
+      if (sigPad.current.isEmpty()) {
+        setError('נא לחתום במשבצת למעלה לפני האישור');
+        return;
+      }
+      const signatureData = sigPad.current.getTrimmedCanvas().toDataURL('image/png');
+      submitForm(signatureData);
+    } catch (err) {
+      alert("שגיאה לפני יצירת הטופס: " + err.message);
+      console.error(err);
     }
-    const signatureData = sigPad.current.getTrimmedCanvas().toDataURL('image/png');
-    submitForm(signatureData);
   };
 
   return (
