@@ -6,7 +6,6 @@ import PackageDetailsStep from './steps/PackageDetailsStep';
 import SignatureStep from './steps/SignatureStep';
 import TermsStep from './steps/TermsStep';
 import ContractPDFTemplate from './ContractPDFTemplate';
-import html2pdf from 'html2pdf.js';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 
@@ -88,7 +87,8 @@ const Wizard = () => {
         jsPDF:        { unit: 'px', format: 'a4', orientation: 'portrait' }
       };
 
-      const pdfBase64 = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+      // Use window.html2pdf loaded from CDN
+      const pdfBase64 = await window.html2pdf().set(opt).from(element).outputPdf('datauristring');
       
       if (!pdfBase64) {
         throw new Error("Failed to generate PDF Base64");
