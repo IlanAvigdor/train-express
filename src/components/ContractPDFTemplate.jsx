@@ -23,7 +23,7 @@ const ContractPDFTemplate = forwardRef(({ formData }, ref) => {
         <p style={{ fontSize: '14px', color: '#666666' }}>מסמך זה מהווה חוזה מחייב בין תמר לבין הלקוח</p>
       </div>
 
-      <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: '#faf9f6', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+      <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: '#faf9f6', borderRadius: '12px', border: '1px solid #e2e8f0', pageBreakInside: 'avoid' }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '20px', marginBottom: '15px', color: '#1c1c1c' }}>פרטי הלקוח והאירוע</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '15px' }}>
           <div><strong>שם הלקוח:</strong> {formData.clientName}</div>
@@ -34,7 +34,7 @@ const ContractPDFTemplate = forwardRef(({ formData }, ref) => {
         </div>
       </div>
 
-      <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+      <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', pageBreakInside: 'avoid' }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '20px', marginBottom: '15px', color: '#1c1c1c' }}>פרטי החבילה והתשלום</h2>
         <p style={{ fontSize: '15px', marginBottom: '10px' }}><strong>עלות השירות:</strong> 2,700 ש"ח</p>
         <p style={{ fontSize: '15px', marginBottom: '10px' }}><strong>תנאי התשלום:</strong> מקדמה ע"ס 500 ₪ משולמת במעמד זה לטובת שריון התאריך. היתרה תשולם ביום האירוע.</p>
@@ -46,7 +46,7 @@ const ContractPDFTemplate = forwardRef(({ formData }, ref) => {
         </ul>
       </div>
 
-      <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '2px solid #f1f5f9' }}>
+      <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '2px solid #f1f5f9', pageBreakInside: 'avoid' }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '20px', marginBottom: '15px', color: '#1c1c1c' }}>חתימת הלקוח</h2>
         <p style={{ fontSize: '14px', marginBottom: '15px' }}>
           אני, <strong>{formData.clientName}</strong>, מאשר/ת את פרטי ההתקשרות, החבילה ומדיניות הביטולים, וחותם/ת על הסכם זה מרצוני הטוב.
