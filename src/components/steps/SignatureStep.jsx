@@ -21,7 +21,8 @@ const SignatureStep = ({ prevStep, submitForm, formData }) => {
         setError('נא לחתום במשבצת למעלה לפני האישור');
         return;
       }
-      const signatureData = sigPad.current.getTrimmedCanvas().toDataURL('image/png');
+      // Use getCanvas() instead of getTrimmedCanvas() to avoid Vite bundling issues with trim-canvas
+      const signatureData = sigPad.current.getCanvas().toDataURL('image/png');
       submitForm(signatureData);
     } catch (err) {
       alert("שגיאה לפני יצירת הטופס: " + err.message);
