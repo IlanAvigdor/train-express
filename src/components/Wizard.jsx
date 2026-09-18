@@ -99,7 +99,7 @@ const Wizard = () => {
 
       // Notify Tamar via WhatsApp
       const text = `*חוזה חדש נחתם!* 🎉\n\n*שם הלקוח:* ${finalData.clientName}\n*טלפון:* ${finalData.clientPhone}\n*תאריך האירוע:* ${finalData.eventDate}\n*כמות מוזמנים:* ${finalData.guestsCount}\n*מיקום:* ${finalData.location}\n\nהחוזה נשלח למייל בהצלחה.`;
-      const phoneNumber = "972585800933";
+      const phoneNumber = "972546231678";
       const encodedText = encodeURIComponent(text);
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
       window.location.href = whatsappUrl;
