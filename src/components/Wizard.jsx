@@ -80,26 +80,41 @@ const Wizard = () => {
 
       setDebugMsg("Step 4: Generating PDF as Base64...");
       const opt = {
-        margin:       0,
-        filename:     'Tamar_Contract.pdf',
+        margin:       [10, 10, 10, 10],
+        filename:     `Tamar_Contract_${finalData.clientName}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: true },
-        jsPDF:        { unit: 'px', format: 'a4', orientation: 'portrait' }
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true,
+          windowWidth: 1024,
+          onclone: (clonedDoc, clonedElement) => {
+            // The cloned element inside the iframe needs its position reset so it isn't rendered off-screen
+            clonedElement.style.position = 'static';
+            clonedElement.style.left = 'auto';
+            clonedElement.style.top = 'auto';
+            clonedElement.style.transform = 'none';
+          }
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       // Use window.html2pdf loaded from CDN
-      const pdfBase64 = await window.html2pdf().set(opt).from(element).outputPdf('datauristring');
+      const pdfBase64Raw = await window.html2pdf().set(opt).from(element).outputPdf('datauristring');
       
-      if (!pdfBase64) {
+      if (!pdfBase64Raw) {
         throw new Error("Failed to generate PDF Base64");
       }
+
+      // Ensure we extract ONLY the raw base64 string, ignoring any data prefix (like filename)
+      const cleanBase64 = pdfBase64Raw.includes("base64,") ? pdfBase64Raw.split("base64,")[1] : pdfBase64Raw;
 
       setDebugMsg("Step 5: Sending contract to server...");
       
       const sendContract = httpsCallable(functions, 'sendSignedContract');
       
       await sendContract({
-        pdfBase64: pdfBase64,
+        pdfBase64: cleanBase64,
         clientName: finalData.clientName,
         clientPhone: finalData.clientPhone,
         eventDate: finalData.eventDate,
@@ -159,8 +174,8 @@ const Wizard = () => {
         />
       </div>
       
-      {/* Hidden PDF Template for rendering */}
-      <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
+      {/* Hidden PDF Template for rendering - moved far off-screen to hide it from the user */}
+      <div style={{ position: 'absolute', top: '-10000px', left: '-10000px', pointerEvents: 'none', zIndex: -1 }}>
         <ContractPDFTemplate ref={pdfRef} formData={formData} />
       </div>
     </>

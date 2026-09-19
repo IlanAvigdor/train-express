@@ -167,3 +167,17 @@ h1, h2, h3, h4 {
   background-color: var(--color-secondary);
   transition: width 0.3s ease;
 }
+
+/* מונע חיתוך באמצע אלמנטים קריטיים */
+.contract-section, .signature-block, table, tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* מגדיר רוחב מדויק של דף A4 */
+#contract-content {
+  width: 794px !important; /* רוחב סטנדרטי של A4 ב-96DPI */
+  padding: 20px;
+  box-sizing: border-box;
+  background: #ffffff;
+}

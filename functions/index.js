@@ -1,14 +1,18 @@
 const { onCall } = require("firebase-functions/v2/https");
 const { Resend } = require("resend");
 
-// Initialize Resend with the provided API key from environment variables
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend lazily inside the function to avoid deployment errors
+let resend;
 
 // TODO: Update this with Tamar's actual email address once provided
 const TAMAR_EMAIL = "liriavigdor1302@gmail.com"; 
 
 exports.sendSignedContract = onCall({ cors: true }, async (request) => {
   try {
+    if (!resend) {
+      resend = new Resend(process.env.RESEND_API_KEY);
+    }
+    
     const { pdfBase64, clientName, clientPhone, eventDate, guestsCount, location, clientEmail } = request.data;
     
     if (!pdfBase64) {
@@ -31,7 +35,7 @@ exports.sendSignedContract = onCall({ cors: true }, async (request) => {
     `;
 
     // Process base64 string (remove data URL part if present)
-    const base64Data = pdfBase64.replace(/^data:application\/pdf;base64,/, "");
+    const base64Data = pdfBase64.includes("base64,") ? pdfBase64.split("base64,")[1] : pdfBase64;
 
     // Send email to Tamar
     const data = await resend.emails.send({
