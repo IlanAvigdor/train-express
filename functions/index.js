@@ -118,7 +118,7 @@ exports.sendSignedContract = onCall({ cors: true, memory: "1GiB", timeoutSeconds
     
     await browser.close();
 
-    const pdfBase64 = pdfBuffer.toString('base64');
+    const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
 
     const htmlContent = `
       <div dir="rtl" style="font-family: Arial, sans-serif; color: #1c1c1c;">
