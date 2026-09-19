@@ -5,7 +5,6 @@ import EventDetailsStep from './steps/EventDetailsStep';
 import PackageDetailsStep from './steps/PackageDetailsStep';
 import SignatureStep from './steps/SignatureStep';
 import TermsStep from './steps/TermsStep';
-import ContractPDFTemplate from './ContractPDFTemplate';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 
@@ -26,7 +25,6 @@ const Wizard = () => {
   
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [debugMsg, setDebugMsg] = useState("");
-  const pdfRef = useRef(null);
   
   const [formData, setFormData] = useState(() => {
     const savedData = sessionStorage.getItem('wizardData');
@@ -62,77 +60,26 @@ const Wizard = () => {
 
   const submitForm = async (signatureData) => {
     try {
-      setDebugMsg("Step 1: Updating state...");
+      setDebugMsg("Step 1: מעדכן נתונים אחרונים...");
       const finalData = { ...formData, signature: signatureData };
-      setFormData(finalData); // update state so PDF ref has the signature
+      setFormData(finalData);
       setIsGeneratingPDF(true);
 
-      // Wait for React to render the signature in the hidden template
-      setDebugMsg("Step 2: Waiting for render...");
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const element = pdfRef.current;
-      if (!element) {
-        throw new Error("PDF Template element is null");
-      }
-
-      setDebugMsg("Step 3: Preparing PDF...");
-
-      setDebugMsg("Step 4: Generating PDF as Base64...");
-      const opt = {
-        margin:       [10, 10, 10, 10],
-        filename:     `Tamar_Contract_${finalData.clientName}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { 
-          scale: 2, 
-          useCORS: true,
-          windowWidth: 800,
-          rtl: true,
-          x: 0,
-          y: 0,
-          scrollX: 0,
-          scrollY: 0,
-          onclone: (clonedDoc, clonedElement) => {
-            // The cloned element inside the iframe needs its position reset so it isn't rendered off-screen
-            const el = clonedElement || clonedDoc.getElementById('contract-content') || clonedDoc.body.firstChild;
-            if (el && el.style) {
-              el.style.position = 'static';
-              el.style.left = '0';
-              el.style.top = '0';
-              el.style.margin = '0 auto';
-              el.style.transform = 'none';
-            }
-          }
-        },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      // Use window.html2pdf loaded from CDN
-      const pdfBase64Raw = await window.html2pdf().set(opt).from(element).outputPdf('datauristring');
-      
-      if (!pdfBase64Raw) {
-        throw new Error("Failed to generate PDF Base64");
-      }
-
-      // Ensure we extract ONLY the raw base64 string, ignoring any data prefix (like filename)
-      const cleanBase64 = pdfBase64Raw.includes("base64,") ? pdfBase64Raw.split("base64,")[1] : pdfBase64Raw;
-
-      setDebugMsg("Step 5: Sending contract to server...");
+      setDebugMsg("Step 2: שולח נתונים לשרת להפקת PDF...");
       
       const sendContract = httpsCallable(functions, 'sendSignedContract');
       
       await sendContract({
-        pdfBase64: cleanBase64,
         clientName: finalData.clientName,
         clientPhone: finalData.clientPhone,
         eventDate: finalData.eventDate,
         guestsCount: finalData.guestsCount,
         location: finalData.location,
-        clientEmail: finalData.clientEmail || ''
+        clientEmail: finalData.clientEmail || '',
+        signature: finalData.signature // Base64 signature image
       });
 
-      setDebugMsg("Done! Contract sent successfully via Email.");
+      setDebugMsg("Done! החוזה נשלח בהצלחה למייל.");
 
       // Notify Tamar via WhatsApp
       const text = `*חוזה חדש נחתם!* 🎉\n\n*שם הלקוח:* ${finalData.clientName}\n*טלפון:* ${finalData.clientPhone}\n*תאריך האירוע:* ${finalData.eventDate}\n*כמות מוזמנים:* ${finalData.guestsCount}\n*מיקום:* ${finalData.location}\n\nהחוזה נשלח למייל בהצלחה.`;
@@ -181,11 +128,6 @@ const Wizard = () => {
           prevStep={prevStep}
           submitForm={submitForm}
         />
-      </div>
-      
-      {/* Hidden PDF Template for rendering - moved far off-screen to hide it from the user */}
-      <div style={{ position: 'absolute', top: '-10000px', left: '-10000px', pointerEvents: 'none', zIndex: -1 }}>
-        <ContractPDFTemplate ref={pdfRef} formData={formData} />
       </div>
     </>
   );
