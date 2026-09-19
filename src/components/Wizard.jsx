@@ -87,6 +87,11 @@ const Wizard = () => {
           scale: 2, 
           useCORS: true,
           windowWidth: 800,
+          rtl: true,
+          x: 0,
+          y: 0,
+          scrollX: 0,
+          scrollY: 0,
           onclone: (clonedDoc, clonedElement) => {
             // The cloned element inside the iframe needs its position reset so it isn't rendered off-screen
             const el = clonedElement || clonedDoc.getElementById('contract-content') || clonedDoc.body.firstChild;
