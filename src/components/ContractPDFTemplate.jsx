@@ -5,12 +5,16 @@ const SpacedText = ({ children }) => {
   if (typeof children !== 'string') return children;
   return (
     <>
-      {children.split(' ').map((word, i, arr) => (
-        <React.Fragment key={i}>
-          {word}
-          {i < arr.length - 1 && <span style={{ display: 'inline-block', width: '4px' }}></span>}
-        </React.Fragment>
-      ))}
+      {children.split(' ').map((word, i, arr) => {
+        // Automatically append RLM to punctuation at the end of words to fix BiDi flipping
+        const fixedWord = word.replace(/([.,!?:;]+)$/, '$1\u200F');
+        return (
+          <React.Fragment key={i}>
+            {fixedWord}
+            {i < arr.length - 1 && <span style={{ display: 'inline-block', width: '4px' }}></span>}
+          </React.Fragment>
+        );
+      })}
     </>
   );
 };
@@ -48,11 +52,11 @@ const ContractPDFTemplate = forwardRef(({ formData }, ref) => {
           <SpacedText>פרטי הלקוח והאירוע</SpacedText>
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '15px' }}>
-          <div><strong><SpacedText>שם הלקוח</SpacedText>:{RLM}</strong><S/>{formData.clientName}</div>
-          <div><strong><SpacedText>טלפון</SpacedText>:{RLM}</strong><S/>{formData.clientPhone}</div>
-          <div><strong><SpacedText>תאריך האירוע</SpacedText>:{RLM}</strong><S/>{formData.eventDate}</div>
-          <div><strong><SpacedText>כמות מוזמנים (משוערת)</SpacedText>:{RLM}</strong><S/>{formData.guestsCount}</div>
-          <div style={{ gridColumn: 'span 2' }}><strong><SpacedText>מיקום / אולם</SpacedText>:{RLM}</strong><S/>{formData.location}</div>
+          <div><strong><SpacedText>שם הלקוח</SpacedText>:{RLM}</strong><S/><SpacedText>{formData.clientName}</SpacedText></div>
+          <div><strong><SpacedText>טלפון</SpacedText>:{RLM}</strong><S/><SpacedText>{formData.clientPhone}</SpacedText></div>
+          <div><strong><SpacedText>תאריך האירוע</SpacedText>:{RLM}</strong><S/><SpacedText>{formData.eventDate}</SpacedText></div>
+          <div><strong><SpacedText>כמות מוזמנים (משוערת)</SpacedText>:{RLM}</strong><S/><SpacedText>{formData.guestsCount}</SpacedText></div>
+          <div style={{ gridColumn: 'span 2' }}><strong><SpacedText>מיקום / אולם</SpacedText>:{RLM}</strong><S/><SpacedText>{formData.location}</SpacedText></div>
         </div>
       </div>
 
@@ -75,7 +79,7 @@ const ContractPDFTemplate = forwardRef(({ formData }, ref) => {
           <SpacedText>חתימת הלקוח</SpacedText>
         </h2>
         <p style={{ fontSize: '14px', marginBottom: '15px', lineHeight: '1.8' }}>
-          <SpacedText>אני,</SpacedText><S/><strong>{formData.clientName}</strong>{RLM},<S/>
+          <SpacedText>אני,</SpacedText><S/><strong><SpacedText>{formData.clientName}</SpacedText></strong>{RLM},<S/>
           <SpacedText>מאשר/ת את פרטי ההתקשרות, החבילה ומדיניות הביטולים, וחותם/ת על הסכם זה מרצוני הטוב.</SpacedText>
         </p>
         {formData.signature && (
