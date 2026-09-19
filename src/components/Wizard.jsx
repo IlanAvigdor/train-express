@@ -86,13 +86,17 @@ const Wizard = () => {
         html2canvas:  { 
           scale: 2, 
           useCORS: true,
-          windowWidth: 1024,
+          windowWidth: 800,
           onclone: (clonedDoc, clonedElement) => {
             // The cloned element inside the iframe needs its position reset so it isn't rendered off-screen
-            clonedElement.style.position = 'static';
-            clonedElement.style.left = 'auto';
-            clonedElement.style.top = 'auto';
-            clonedElement.style.transform = 'none';
+            const el = clonedElement || clonedDoc.getElementById('contract-content') || clonedDoc.body.firstChild;
+            if (el && el.style) {
+              el.style.position = 'static';
+              el.style.left = '0';
+              el.style.top = '0';
+              el.style.margin = '0 auto';
+              el.style.transform = 'none';
+            }
           }
         },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
