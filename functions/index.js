@@ -1,19 +1,25 @@
 const { onCall } = require("firebase-functions/v2/https");
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-let resend;
-const TAMAR_EMAIL = "liriavigdor1302@gmail.com"; 
+let transporter;
+const TAMAR_EMAIL = "tamarcontracts@gmail.com"; 
 
 exports.sendSignedContract = onCall({ cors: true, memory: "1GiB", timeoutSeconds: 120 }, async (request) => {
   try {
-    if (!resend) {
-      resend = new Resend(process.env.RESEND_API_KEY);
+    if (!transporter) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: TAMAR_EMAIL,
+          pass: process.env.GMAIL_APP_PASSWORD // We will configure this environment variable
+        }
+      });
     }
     
     // Lazy load puppeteer to prevent deployment timeouts during initialization
     const puppeteer = require("puppeteer");
     
-    const { clientName, clientPhone, eventDate, guestsCount, location, clientEmail, signature } = request.data;
+    const { clientName, clientPhone, eventDate, guestsCount, location, clientEmail, price, signature } = request.data;
     
     if (!signature) {
       throw new Error("Missing signature data in request");
@@ -75,7 +81,22 @@ exports.sendSignedContract = onCall({ cors: true, memory: "1GiB", timeoutSeconds
 
         <div class="contract-section white">
           <h2>פרטי החבילה והתשלום</h2>
-          <p style="font-size: 15px;"><strong>עלות השירות: </strong>2,700 ש"ח</p>
+          <p style="font-size: 15px; margin-bottom: 5px;"><strong>השירות מתחיל כחודש לפני האירוע וכולל את הסעיפים הבאים:</strong></p>
+          <ul style="margin-bottom: 20px;">
+            <li>פגישה פרונטלית עם הזוג</li>
+            <li>הכנסת תקציב למבנה אקסל</li>
+            <li>לו״ז ליום האירוע מרגע ההגעה לאולם והפצתו לכלל הספקים</li>
+            <li>פיקוח על עיצוב ותפריט לפי החוזה שנחתם מול האולם</li>
+            <li>פיקוח על סידורי הושבה באולם ועזרה במידת הצורך לדיילות</li>
+            <li>בקרה וניהול רזרבות</li>
+            <li>ניהול ובקרה על מלאי האלכוהול החיצוני</li>
+            <li>סנכרון מול ספקים - ניהול תקשורת שוטפת מול כלל הספקים ביום האירוע</li>
+            <li>ערכת חירום ( עזרה ראשונה , ערכת תפירה, וכ׳ו...)</li>
+            <li>פגישת זום מסכמת לפני האירוע ודרישות מיוחדות של הזוג</li>
+            <li>זמינות מלאה לכל שאלה ובקשה ביום האירוע</li>
+          </ul>
+          
+          <p style="font-size: 15px;"><strong>עלות השירות: </strong>${price || '2,700'} ש"ח</p>
           <p style="font-size: 15px;"><strong>תנאי התשלום: </strong>מקדמה ע"ס 500 ₪ משולמת במעמד זה לטובת שריון התאריך. היתרה תשולם ביום האירוע.</p>
           <p style="font-size: 15px;"><strong>מדיניות ביטולים: </strong></p>
           <ul>
@@ -136,8 +157,8 @@ exports.sendSignedContract = onCall({ cors: true, memory: "1GiB", timeoutSeconds
     `;
 
     // Send email to Tamar
-    const data = await resend.emails.send({
-      from: 'Tamar Events <onboarding@resend.dev>',
+    await transporter.sendMail({
+      from: `"Tamar Events" <${TAMAR_EMAIL}>`,
       to: TAMAR_EMAIL, 
       subject: `חוזה חתום חדש: ${clientName}`,
       html: htmlContent,
@@ -145,14 +166,15 @@ exports.sendSignedContract = onCall({ cors: true, memory: "1GiB", timeoutSeconds
         {
           filename: `contract_${clientName}.pdf`,
           content: pdfBase64,
+          encoding: 'base64'
         }
       ]
     });
 
     // If a client email was provided, send a copy to the client as well
     if (clientEmail) {
-      await resend.emails.send({
-        from: 'Tamar Events <onboarding@resend.dev>',
+      await transporter.sendMail({
+        from: `"Tamar Events" <${TAMAR_EMAIL}>`,
         to: clientEmail,
         subject: `העתק החוזה החתום שלך עם תמר`,
         html: `
@@ -167,12 +189,13 @@ exports.sendSignedContract = onCall({ cors: true, memory: "1GiB", timeoutSeconds
           {
             filename: `Tamar_Contract_${clientName}.pdf`,
             content: pdfBase64,
+            encoding: 'base64'
           }
         ]
       });
     }
 
-    return { success: true, data };
+    return { success: true };
   } catch (error) {
     console.error("Error generating or sending contract:", error);
     throw new Error(error.message);

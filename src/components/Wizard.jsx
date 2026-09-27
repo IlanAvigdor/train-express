@@ -5,8 +5,9 @@ import EventDetailsStep from './steps/EventDetailsStep';
 import PackageDetailsStep from './steps/PackageDetailsStep';
 import SignatureStep from './steps/SignatureStep';
 import TermsStep from './steps/TermsStep';
-import { functions } from '../firebase';
+import { functions, db } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
+import { doc, getDoc } from 'firebase/firestore';
 
 const STEPS = [
   WelcomeStep,
@@ -43,6 +44,33 @@ const Wizard = () => {
   }, [currentStep]);
 
   useEffect(() => {
+    const fetchContract = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const contractId = params.get('id');
+      
+      // If we already have data in formData and we are just refreshing, we might not need to fetch.
+      // But let's fetch to be safe if clientName is empty.
+      if (contractId && !formData.clientName) {
+        try {
+          const docRef = doc(db, 'contracts', contractId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setFormData(prev => ({ 
+              ...prev, 
+              clientName: data.clientName || prev.clientName,
+              price: data.price || prev.price
+            }));
+          }
+        } catch (err) {
+          console.error("Error fetching contract:", err);
+        }
+      }
+    };
+    fetchContract();
+  }, []);
+
+  useEffect(() => {
     sessionStorage.setItem('wizardData', JSON.stringify(formData));
   }, [formData]);
 
@@ -76,6 +104,7 @@ const Wizard = () => {
         guestsCount: finalData.guestsCount,
         location: finalData.location,
         clientEmail: finalData.clientEmail || '',
+        price: finalData.price,
         signature: finalData.signature // Base64 signature image
       });
 
@@ -83,7 +112,7 @@ const Wizard = () => {
 
       // Notify Tamar via WhatsApp
       const text = `*חוזה חדש נחתם!* 🎉\n\n*שם הלקוח:* ${finalData.clientName}\n*טלפון:* ${finalData.clientPhone}\n*תאריך האירוע:* ${finalData.eventDate}\n*כמות מוזמנים:* ${finalData.guestsCount}\n*מיקום:* ${finalData.location}\n\nהחוזה נשלח למייל בהצלחה.`;
-      const phoneNumber = "972546231678";
+      const phoneNumber = "972585800933";
       const encodedText = encodeURIComponent(text);
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
       

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ArrowRight, ShieldCheck, CreditCard } from 'lucide-react';
 
-const TermsStep = ({ nextStep, prevStep }) => {
+const TermsStep = ({ nextStep, prevStep, formData }) => {
   return (
     <div className="animate-fade-in">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.5rem' }}>
@@ -18,7 +18,7 @@ const TermsStep = ({ nextStep, prevStep }) => {
       }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--color-primary)' }}>מחיר שירות</h3>
         <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-secondary)', marginBottom: '1rem' }}>
-          2,700 ש"ח
+          {formData?.price ? `${formData.price} ש"ח` : '2,700 ש"ח'}
         </p>
 
         <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>אופן התשלום:</h4>

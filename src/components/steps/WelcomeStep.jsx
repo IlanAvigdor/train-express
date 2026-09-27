@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
-const WelcomeStep = ({ nextStep }) => {
+const WelcomeStep = ({ nextStep, formData }) => {
   return (
     <div className="text-center animate-fade-in" style={{ padding: '2rem 0' }}>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
@@ -12,7 +12,7 @@ const WelcomeStep = ({ nextStep }) => {
         הפקות וניהול אירועים
       </h2>
       <p style={{ marginBottom: '3rem', fontSize: '1.1rem', maxWidth: '400px', margin: '0 auto 3rem auto' }}>
-        ברוכים הבאים! לפנינו תהליך קצר ופשוט לאישור פרטי ההפקה והחוזה לאירוע שלכם.
+        {formData?.clientName ? `נעים להכיר ${formData.clientName}! ` : ''}ברוכים הבאים! לפנינו תהליך קצר ופשוט לאישור פרטי ההפקה והחוזה לאירוע שלכם.
       </p>
       
       <button className="btn btn-primary" onClick={nextStep} style={{ width: '100%', maxWidth: '300px' }}>

@@ -6,8 +6,8 @@ const ClientInfoStep = ({ formData, updateFormData, nextStep, prevStep }) => {
 
   const handleNext = () => {
     const newErrors = {};
-    if (!formData.clientName.trim()) newErrors.clientName = 'שדה חובה';
-    if (!formData.clientPhone.trim()) newErrors.clientPhone = 'שדה חובה';
+    if (!formData.clientEmail?.trim()) newErrors.clientEmail = 'שדה חובה';
+    if (!formData.clientPhone?.trim()) newErrors.clientPhone = 'שדה חובה';
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -24,15 +24,17 @@ const ClientInfoStep = ({ formData, updateFormData, nextStep, prevStep }) => {
       </div>
 
       <div className="form-group">
-        <label className="form-label">שם מלא (או שמות בני הזוג)</label>
+        <label className="form-label">כתובת אימייל לשליחת החוזה</label>
         <input 
-          type="text" 
+          type="email" 
           className="form-input" 
-          placeholder="למשל: דניאל ונועה"
-          value={formData.clientName}
-          onChange={(e) => updateFormData({ clientName: e.target.value })}
+          placeholder="example@gmail.com"
+          value={formData.clientEmail || ''}
+          onChange={(e) => updateFormData({ clientEmail: e.target.value })}
+          dir="ltr"
+          style={{ textAlign: 'right' }}
         />
-        {errors.clientName && <span style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>{errors.clientName}</span>}
+        {errors.clientEmail && <span style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>{errors.clientEmail}</span>}
       </div>
 
       <div className="form-group" style={{ marginBottom: '3rem' }}>
